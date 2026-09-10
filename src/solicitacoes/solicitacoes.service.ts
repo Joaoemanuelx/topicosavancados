@@ -1,32 +1,52 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
 
-type StatusSolicitacao = 'pendente' | 'aprovada';
-
-type Solicitacao = {
-  id: number;
-  titulo: string;
-  status: StatusSolicitacao;
-};
+  MODELO_PROVIDER,
+} from '../ia/providers/modelo.provider';
+import type {
+  GerarRespostaOutput,
+  ModeloProvider,
+} from '../ia/providers/modelo.provider';
+import { SolicitacaoCategoria } from './solicitacoes-categorias';
 
 @Injectable()
 export class SolicitacoesService {
-  private readonly solicitacoes: Solicitacao[] = [
-    { id: 1, titulo: 'Aquisição de notebook', status: 'pendente' },
-  ];
+  constructor(
+    @Inject(MODELO_PROVIDER)
+    private readonly modelo: ModeloProvider,
+  ) {}
 
-  buscarPorId(id: number) {
-    const solicitacao = this.solicitacoes.find((item) => item.id === id);
+  async triagem(descricao: string): Promise<GerarRespostaOutput> {
+    const mensagemNormalizada = descricao.trim();
 
-    if (!solicitacao) {
-      throw new NotFoundException('Solicitação não encontrada');
+    if (!mensagemNormalizada) {
+      throw new BadRequestException('A mensagem não pode conter apenas espaços');
     }
 
-    return solicitacao;
+    const resultado = await this.modelo.gerar({mensagem: `Você é responsável pela triagem de solicitações acadêmicas.
+
+Classifique a solicitação em exatamente uma das categorias abaixo:
+
+SUPORTE_TECNICO
+COBRANCA
+VIDA_ACADEMICA
+ATENDIMENTO
+NAO_IDENTIFICADO
+
+Retorne somente o nome da categoria, sem explicações, pontuação ou texto adicional.
+
+Solicitação: ${mensagemNormalizada}`})
+
+        const categoria = resultado.resposta.toUpperCase().trim().replace(/[.!?]/g, '');
+
+        if(!Object.values(SolicitacaoCategoria).includes(categoria as SolicitacaoCategoria)) {
+            throw new BadRequestException(`Categoria inválida: ${categoria}`);
+        }
+
+        return {
+            ...resultado, resposta: categoria,
+        }
   }
 
-  aprovar(id: number) {
-    const solicitacao = this.buscarPorId(id);
-    solicitacao.status = 'aprovada';
-    return solicitacao;
-  }
+  
 }

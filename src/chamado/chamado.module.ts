@@ -1,7 +1,7 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { SolicitacoesController } from './solicitacoes.controller';
-import { SolicitacoesService } from './solicitacoes.service';
+import { ChamadoController } from './chamado.controller';
+import { ChamadoService } from './chamado.service';
 import {
   MODELO_PROVIDER,
 } from '../ia/providers/modelo.provider';
@@ -9,13 +9,13 @@ import { OllamaProvider } from '../ia/providers/ollama.provider';
 
 @Module({
   imports: [HttpModule],
-  controllers: [SolicitacoesController],
+  controllers: [ChamadoController],
   providers: [
-    SolicitacoesService,
+    ChamadoService,
     {
       provide: MODELO_PROVIDER,
       useClass: OllamaProvider,
     },
   ],
 })
-export class SolicitacoesModule {}
+export class ChamadoModule {}

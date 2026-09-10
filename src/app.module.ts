@@ -1,13 +1,23 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { EstadoModule } from './estado/estado.module';
-import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
+import { IaModule } from './ia/ia.module';
+import { ChamadoService } from './chamado/chamado.service';
+import { ChamadoController } from './chamado/chamado.controller';
+import { ChamadoModule } from './chamado/chamado.module';
+import { SolicitacoesService } from './solicitacoes/solicitacoes.service';
+import { SolicitacoesController } from './solicitacoes/solicitacoes.controller';
 import { SolicitacoesModule } from './solicitacoes/solicitacoes.module';
 
 @Module({
-  imports: [AuthModule, EstadoModule, SolicitacoesModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    IaModule,
+    ChamadoModule,
+    SolicitacoesModule,
+  ],
+  providers: [ChamadoService, SolicitacoesService],
+  controllers: [ChamadoController, SolicitacoesController],
 })
 export class AppModule {}

@@ -1,22 +1,23 @@
-import { Controller, Get, Param, Patch, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
+import { ClassificarSolicitacaoDto } from './dto/classificar-solicitacao.dto';
 import { SolicitacoesService } from './solicitacoes.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Roles } from 'src/auth/decorators/roles.decorator';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
 
 @Controller('solicitacoes')
 export class SolicitacoesController {
-  constructor(private readonly solicitacoesService: SolicitacoesService) { }
+  constructor(private readonly solicitacoesService: SolicitacoesService) {}
 
-  @Get(':id')
-  buscarPorId(@Param('id', ParseIntPipe) id: number) {
-    return this.solicitacoesService.buscarPorId(id);
-  }
+  @Post('triagem')
+  async triagem(@Body() dto: ClassificarSolicitacaoDto) {
+    const resultado = await this.solicitacoesService.triagem(dto.descricao);
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('gestor')
-  @Patch(':id/aprovar')
-  aprovar(@Param('id', ParseIntPipe) id: number) {
-    return this.solicitacoesService.aprovar(id);
+    return {
+      resposta: dto.descricao,
+      categoria: resultado.resposta,
+      modelo: resultado.modelo,
+      uso: {
+        tokensEntrada: resultado.tokensEntrada,
+        tokensSaida: resultado.tokensSaida,
+      },
+    };
   }
 }
