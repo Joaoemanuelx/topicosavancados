@@ -5,7 +5,7 @@ services:
     ports:
       - "11434:11434"
     volumes:
-      - ollama_data:/root/.ollama
+      - aula-backend_ollama_data:/root/.ollama
     restart: unless-stopped
 
   frontend:
@@ -21,5 +21,7 @@ services:
       - frontend_node_modules:/app/node_modules
 
 volumes:
+  aula-backend_ollama_data:
+    external: true
   ollama_data:
   frontend_node_modules:
