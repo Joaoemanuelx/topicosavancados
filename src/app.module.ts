@@ -7,6 +7,7 @@ import { ChamadoModule } from './chamado/chamado.module';
 import { SolicitacoesService } from './solicitacoes/solicitacoes.service';
 import { SolicitacoesController } from './solicitacoes/solicitacoes.controller';
 import { SolicitacoesModule } from './solicitacoes/solicitacoes.module';
+import { ConversasModule } from './conversa/conversas.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { SolicitacoesModule } from './solicitacoes/solicitacoes.module';
     IaModule,
     ChamadoModule,
     SolicitacoesModule,
+    ConversasModule,
   ],
   providers: [ChamadoService, SolicitacoesService],
   controllers: [ChamadoController, SolicitacoesController],

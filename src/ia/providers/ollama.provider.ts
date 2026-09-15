@@ -13,6 +13,7 @@ import {
   GerarRespostaOutput,
   GerarStreamInput,
   ModeloProvider,
+  ConversarInput,
 } from './modelo.provider';
 
 interface OllamaChatResponse {
@@ -71,6 +72,36 @@ export class OllamaProvider implements ModeloProvider {
     private readonly http: HttpService,
     private readonly config: ConfigService,
   ) {}
+
+  async conversar(input: ConversarInput): Promise<GerarRespostaOutput> {
+  const baseUrl = this.config.getOrThrow<string>('OLLAMA_BASE_URL');
+  const model = this.config.getOrThrow<string>('OLLAMA_MODEL');
+  const timeout = Number(
+    this.config.get<string>('OLLAMA_TIMEOUT_MS') ?? '30000',
+  );
+
+  const response = await this.http.axiosRef.post<OllamaChatResponse>(
+    `${baseUrl}/api/chat`,
+    {
+      model,
+      messages: input.messages,
+      stream: false,
+    },
+    { timeout },
+  );
+
+  const content = response.data.message?.content?.trim();
+  if (!content) {
+    throw new BadGatewayException('Resposta inválida do modelo');
+  }
+
+  return {
+    resposta: content,
+    modelo: response.data.model,
+    tokensEntrada: response.data.prompt_eval_count,
+    tokensSaida: response.data.eval_count,
+  };
+}
 
   async gerar(
     input: GerarRespostaInput,
