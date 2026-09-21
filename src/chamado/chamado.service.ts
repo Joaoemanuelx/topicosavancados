@@ -1,62 +1,47 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import {
   MODELO_PROVIDER,
+  type ModeloProvider,
 } from '../ia/providers/modelo.provider';
-import type {
-  GerarRespostaOutput,
-  ModeloProvider,
-} from '../ia/providers/modelo.provider';
-import { ChamadoCategoria } from './chamado-categoria';
+import {
+  isChamadoCategoria,
+  type ChamadoCategoria,
+} from './chamado-categoria';
+import { buildClassificacaoPrompt } from './classificacao.prompt';
 
-
+export interface ClassificacaoResultado {
+  texto: string;
+  categoria: ChamadoCategoria;
+  modelo: string;
+}
 
 @Injectable()
-export class ChamadoService {
+export class ChamadosService {
   constructor(
     @Inject(MODELO_PROVIDER)
     private readonly modelo: ModeloProvider,
   ) {}
 
-  async ClassificarChamado(texto: string): Promise<GerarRespostaOutput> {
-    const mensagemNormalizada = texto.trim();
+  async classificar(textoOriginal: string): Promise<ClassificacaoResultado> {
+    const texto = textoOriginal.trim();
+    const prompt = buildClassificacaoPrompt(texto);
+    const resultado = await this.modelo.gerar({ mensagem: prompt });
+    const categoria = resultado.resposta.trim().toUpperCase();
 
-    if (!mensagemNormalizada) {
-      throw new BadRequestException('A mensagem não pode conter apenas espaços');
-    }
-
-    const resultado = await this.modelo.gerar({
-      mensagem: `
-Você é um classificador de chamados.
-
-Categorias permitidas:
-${Object.values(ChamadoCategoria).join(', ')}
-
-Escolha a categoria que melhor representa o chamado.
-
-Regras:
-- Responda SOMENTE com uma categoria.
-- Não escreva explicações.
-- Não escreva frases.
-- Não traduza as categorias.
-- Use exatamente o nome da categoria.
-
-Chamado:
-${mensagemNormalizada}
-
-Categoria:
-`,
-});
-
-    const categoria = resultado.resposta.toUpperCase().trim().replace(/[.!?]/g, '');
-
-    
-
-    if(!Object.values(ChamadoCategoria).includes(categoria as ChamadoCategoria)) {
-      throw new BadRequestException(`Categoria inválida: ${categoria}`);
+    if (!isChamadoCategoria(categoria)) {
+      throw new BadGatewayException(
+        'O modelo retornou uma categoria inválida',
+      );
     }
 
     return {
-        ... resultado, resposta: categoria,
-    }
-}
+      texto,
+      categoria,
+      modelo: resultado.modelo,
+    };
+  }
 }

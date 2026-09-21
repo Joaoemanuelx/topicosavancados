@@ -1,21 +1,13 @@
-import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { ChamadoController } from './chamado.controller';
-import { ChamadoService } from './chamado.service';
-import {
-  MODELO_PROVIDER,
-} from '../ia/providers/modelo.provider';
-import { OllamaProvider } from '../ia/providers/ollama.provider';
+import { IaModule } from '../ia/ia.module';
+import { AvaliadorClassificacaoService } from './avaliacao/avaliador-classificacao.service';
+import { ChamadosController } from './chamado.controller';
+import { ChamadosService } from './chamado.service';
 
 @Module({
-  imports: [HttpModule],
-  controllers: [ChamadoController],
-  providers: [
-    ChamadoService,
-    {
-      provide: MODELO_PROVIDER,
-      useClass: OllamaProvider,
-    },
-  ],
+  imports: [IaModule],
+  controllers: [ChamadosController],
+  providers: [ChamadosService, AvaliadorClassificacaoService],
+  exports: [AvaliadorClassificacaoService],
 })
-export class ChamadoModule {}
+export class ChamadosModule {}
